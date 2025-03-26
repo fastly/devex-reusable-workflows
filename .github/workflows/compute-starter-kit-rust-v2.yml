@@ -1,0 +1,66 @@
+# Note:
+#
+# This workflow expects the calling project to have a
+# rust-toolchain.toml file which specifies the necessary version of
+# the toolchain, the necessary targets (matching those specified in
+# the project's .cargo/config.toml), and at least the 'clippy' and
+# 'rustfmt' toolchain components.
+#
+# Example:
+#
+# [toolchain]
+# channel = "stable"
+# targets = [ "wasm32-wasip1" ]
+# profile = "default"
+
+name: Common Test
+
+on:
+  workflow_call:
+    secrets:
+      github_token:
+        required: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  common-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository contents
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust toolchain with caching
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+
+      - name: Check
+        run: RUSTFLAGS="--deny warnings" cargo check
+
+      - name: Format
+        run: cargo fmt -- --check
+
+      - name: Clippy
+        run: cargo clippy
+
+      - name: Audit
+        run: cargo audit
+
+      - name: Build (using cargo)
+        run: RUSTFLAGS="--deny warnings" cargo build --profile release
+
+      - name: Install Fastly CLI
+        uses: fastly/compute-actions/setup@v11
+        with:
+          token: ${{ secrets.github_token }}
+
+      - name: Build (using CLI)
+        uses: fastly/compute-actions/build@v11
