@@ -58,9 +58,9 @@ jobs:
         run: RUSTFLAGS="--deny warnings" cargo build --profile release
 
       - name: Install Fastly CLI
-        uses: fastly/compute-actions/setup@v11
+        uses: fastly/compute-actions/setup@v12
         with:
           token: ${{ secrets.github_token }}
 
       - name: Build (using CLI)
-        uses: fastly/compute-actions/build@v11
+        uses: fastly/compute-actions/build@v12
