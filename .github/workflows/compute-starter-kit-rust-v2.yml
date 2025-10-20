@@ -20,6 +20,12 @@ on:
     secrets:
       gh_token:
         required: true
+    inputs:
+      runner_label:
+        description: 'Label for the runner to be used for the jobs.'
+        default: 'ubuntu-latest'
+        required: false
+        type: string
 
 defaults:
   run:
@@ -27,7 +33,7 @@ defaults:
 
 jobs:
   common-test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner_label }}
     steps:
       - name: Checkout repository contents
         uses: actions/checkout@v5
