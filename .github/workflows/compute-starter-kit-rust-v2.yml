@@ -46,7 +46,7 @@ jobs:
       - name: Install cargo-audit
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-audit
+          tool: cargo-audit, wasm-opt
 
       - name: Check
         run: RUSTFLAGS="--deny warnings" cargo check
