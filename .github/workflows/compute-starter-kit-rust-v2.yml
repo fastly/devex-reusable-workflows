@@ -36,7 +36,7 @@ jobs:
     runs-on: ${{ inputs.runner_label }}
     steps:
       - name: Checkout repository contents
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 

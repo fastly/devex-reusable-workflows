@@ -21,7 +21,7 @@ jobs:
           repositories: ${{ inputs.repository }}
 
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           token: ${{ steps.github-token.outputs.token }}
 
