@@ -1,8 +1,8 @@
 # Reusable GitHub Actions Workflows
 
-These workflows are intended for use in the public repositories
+These workflows are intended for use in the GitHub repositories
 managed the Fastly Developer Experience Engineering team. Since the
-repository is public anyone is free to use if them if they wish, but
+repository is public anyone is free to use them if they wish, but
 the team does not make any guarantees about maintaining compatibility
 when changes are made.
 
