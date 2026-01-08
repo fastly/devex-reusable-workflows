@@ -1,0 +1,71 @@
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Optional version override (SemVer WITHOUT leading v), e.g. 1.2.3 or 1.2.3-rc.1"
+        type: string
+        required: false
+        default: ""
+    outputs:
+      version:
+        value: ${{ jobs.extract.outputs.version }}
+      dist_tag:
+        value: ${{ jobs.extract.outputs.dist_tag }}
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.out.outputs.version }}
+      dist_tag: ${{ steps.out.outputs.dist_tag }}
+    steps:
+      - id: out
+        shell: bash
+        run: |
+          # SemVer (no leading "v" here; we enforce that separately for tag parsing)
+          SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
+
+          VERSION_INPUT='${{ inputs.version }}'
+          VERSION=""
+
+          if [[ -n "$VERSION_INPUT" ]]; then
+            # Use override
+            VERSION="$VERSION_INPUT"
+            if [[ ! "$VERSION" =~ $SEMVER_RE ]]; then
+              echo "::error::Invalid inputs.version: '$VERSION' (expected SemVer like 1.2.3 or 1.2.3-rc.1)"
+              exit 1
+            fi
+          else
+            # Require tag context
+            if [[ "${GITHUB_REF:-}" != refs/tags/* ]]; then
+              echo "::error::No inputs.version provided and this run is not a tag ref (GITHUB_REF='${GITHUB_REF:-}')"
+              exit 1
+            fi
+
+            TAG="$GITHUB_REF_NAME" # e.g. v1.2.3-rc.1+build.7
+            if [[ "$TAG" != v* ]]; then
+              echo "::error::Tag must start with 'v' (got '$TAG')"
+              exit 1
+            fi
+
+            REST="${TAG#v}" # e.g. 1.2.3-rc.1+build.7
+            if [[ ! "$REST" =~ $SEMVER_RE ]]; then
+              echo "::error::Invalid tag version: '$TAG' (expected v followed by SemVer like v1.2.3 or v1.2.3-rc.1)"
+              exit 1
+            fi
+
+            VERSION="$REST"
+          fi
+
+          # Compute dist_tag:
+          # - stable => latest
+          # - prerelease => first identifier before dot (rc.1 -> rc)
+          NO_BUILD="${VERSION%%+*}"        # drop +build -> 1.2.3-rc.1
+          DIST_TAG="latest"
+          if [[ "$NO_BUILD" == *-* ]]; then
+            PRERELEASE="${NO_BUILD#*-}"    # -> rc.1
+            DIST_TAG="${PRERELEASE%%.*}"   # -> rc
+          fi
+
+          echo "version=$VERSION"  >> "$GITHUB_OUTPUT"
+          echo "dist_tag=$DIST_TAG" >> "$GITHUB_OUTPUT"

@@ -1,0 +1,101 @@
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version number to release e.g., v1.2.3 or v1.2.3-rc.1'
+        required: true
+        type: string
+
+      dist_tag:
+        description: 'Dist tag to release e.g., latest, alpha, beta, rc, etc.'
+        required: true
+        type: string
+
+      dry_run:
+        description: 'Run all checks but do not actually publish packages.'
+        default: false
+        required: false
+        type: boolean
+
+      runner_label:
+        description: 'Label for the runner to be used for the jobs.'
+        default: 'ubuntu-latest'
+        required: false
+        type: string
+
+
+jobs:
+  publish-javascript-github:
+    runs-on: ${{ inputs.runner_label }}
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository contents
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Get package name
+        shell: bash
+        run: |
+          set -euo pipefail
+          PACKAGE_NAME="$(npm pkg get name | tr -d '"')"
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> "$GITHUB_ENV"
+
+      - name: Validate package.json version
+        shell: bash
+        run: |
+          EXPECTED_VERSION="${{ inputs.version }}"          
+          PKG_VERSION="$(npm pkg get version | tr -d '"')"
+          
+          if [[ "$PKG_VERSION" != "$EXPECTED_VERSION" ]]; then
+            echo "::error::package.json version ($PKG_VERSION) does not match release version ($EXPECTED_VERSION)"
+            exit 1
+          fi
+
+      - name: Install npm dependencies
+        shell: bash
+        run: npm ci
+
+      - name: Publish to GitHub Packages
+        id: publish_github
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+
+          npm config set "@fastly:registry" "https://npm.pkg.github.com/"
+          npm config set "//npm.pkg.github.com/:_authToken" "$NODE_AUTH_TOKEN"
+
+          DIST_TAG="${{ inputs.dist_tag }}"
+          echo "Publishing ${PACKAGE_NAME} to pkg.github.com using dist-tag: ${DIST_TAG}"
+          if [[ '${{ inputs.dry_run }}' == 'true' ]]; then
+            npm publish --dry-run --tag "$DIST_TAG"
+          else
+            npm publish --tag "$DIST_TAG"
+          fi
+
+      - name: Publish status
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ '${{ inputs.dry_run }}' == 'true' ]]; then
+            echo "::notice::Dry run enabled — no package was actually published."
+            exit 0
+          fi
+      
+          echo "github outcome: ${{ steps.publish_github.outcome || 'skipped' }}"
+          if [[ "${{ steps.publish_github.outcome }}" == 'failure' ]]; then
+            echo "::error::Publish to GitHub Packages failed."
+            echo "::notice::Hint: Ensure the caller workflow grants 'permissions: packages: write'."
+            exit 1
+          fi
