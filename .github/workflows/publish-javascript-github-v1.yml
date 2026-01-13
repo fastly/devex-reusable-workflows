@@ -1,28 +1,48 @@
 on:
   workflow_call:
     inputs:
-      version:
-        description: 'Version number to release e.g., v1.2.3 or v1.2.3-rc.1'
-        required: true
+      expected_pkg_name:
+        description: >
+          Expected package.json name. If provided, must match.
         type: string
+        required: false
+
+      expected_pkg_version:
+        description: >
+          Expected package.json version. If provided, must match.
+          May include optional leading 'v' (e.g. v1.2.3).
+        type: string
+        required: false
 
       dist_tag:
         description: 'Dist tag to release e.g., latest, alpha, beta, rc, etc.'
-        required: true
         type: string
+        required: false
+
+      node_auth_token:
+        description: >
+          Token used to authenticate to GitHub Packages (usually GITHUB_TOKEN).
+        type: string
+        required: false
 
       dry_run:
         description: 'Run all checks but do not actually publish packages.'
-        default: false
-        required: false
         type: boolean
+        required: false
+        default: false
+
+      cwd:
+        description: >
+          Working directory containing package.json (relative to repo root).
+        type: string
+        required: false
+        default: "."
 
       runner_label:
         description: 'Label for the runner to be used for the jobs.'
         default: 'ubuntu-latest'
         required: false
         type: string
-
 
 jobs:
   publish-javascript-github:
@@ -39,25 +59,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Get package name
-        shell: bash
-        run: |
-          set -euo pipefail
-          PACKAGE_NAME="$(npm pkg get name | tr -d '"')"
-          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> "$GITHUB_ENV"
-
-      - name: Validate package.json version
-        shell: bash
-        run: |
-          EXPECTED_VERSION="${{ inputs.version }}"          
-          PKG_VERSION="$(npm pkg get version | tr -d '"')"
-          
-          if [[ "$PKG_VERSION" != "$EXPECTED_VERSION" ]]; then
-            echo "::error::package.json version ($PKG_VERSION) does not match release version ($EXPECTED_VERSION)"
-            exit 1
-          fi
 
       - name: Install npm dependencies
         shell: bash
@@ -65,23 +66,14 @@ jobs:
 
       - name: Publish to GitHub Packages
         id: publish_github
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
-        run: |
-          set -euo pipefail
-
-          npm config set "@fastly:registry" "https://npm.pkg.github.com/"
-          npm config set "//npm.pkg.github.com/:_authToken" "$NODE_AUTH_TOKEN"
-
-          DIST_TAG="${{ inputs.dist_tag }}"
-          echo "Publishing ${PACKAGE_NAME} to pkg.github.com using dist-tag: ${DIST_TAG}"
-          if [[ '${{ inputs.dry_run }}' == 'true' ]]; then
-            npm publish --dry-run --tag "$DIST_TAG"
-          else
-            npm publish --tag "$DIST_TAG"
-          fi
-
+        uses: fastly/devex-reusable-workflows/actions/publish-javascript-github-v1@kats/publish-javascript-packages
+        with:
+          expected_pkg_name: ${{ inputs.expected_pkg_name }}
+          expected_pkg_version: ${{ inputs.expected_pkg_version }}
+          dist_tag: ${{ inputs.dist_tag }}
+          node_auth_token: ${{ inputs.node_auth_token != '' && inputs.node_auth_token || secrets.GITHUB_TOKEN }}
+          dry_run: ${{ inputs.dry_run }}
+          cwd: ${{ inputs.cwd }}
       - name: Publish status
         if: always()
         shell: bash
@@ -96,6 +88,6 @@ jobs:
           echo "github outcome: ${{ steps.publish_github.outcome || 'skipped' }}"
           if [[ "${{ steps.publish_github.outcome }}" == 'failure' ]]; then
             echo "::error::Publish to GitHub Packages failed."
-            echo "::notice::Hint: Ensure the caller workflow grants 'permissions: packages: write'."
+            echo "::notice::Hint: Ensure the caller repo/workflow is able to write this package."
             exit 1
           fi

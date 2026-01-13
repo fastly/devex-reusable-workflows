@@ -1,0 +1,61 @@
+name: Validate package.json name and/or version
+description: >
+  Optionally validates package.json name and/or version and publishes
+  to npmjs.org (supports dry-run). Assumes dependencies are already installed.
+
+inputs:
+  expected_pkg_name:
+    description: >
+      Expected package.json name. If provided, must match.
+    required: false
+
+  expected_pkg_version:
+    description: >
+      Expected package.json version. If provided, must match.
+      May include optional leading 'v' (e.g. v1.2.3).
+    required: false
+
+  cwd:
+    description: >
+      Working directory containing package.json (relative to repo root).
+    required: false
+    default: "."
+
+runs:
+  using: composite
+  steps:
+    - name: Validate package.json name and/or version
+      shell: bash
+      working-directory: ${{ inputs.cwd }}
+      run: |
+        set -euo pipefail
+
+        if [[ ! -f package.json ]]; then
+          echo "::error::No package.json found in cwd '${{ inputs.cwd }}'"
+          exit 1
+        fi
+
+        PKG_NAME="$(npm pkg get name --json | jq -r)"
+        PKG_VERSION="$(npm pkg get version --json | jq -r)"
+
+        echo "Detected package:"
+        echo "  name   : ${PKG_NAME}"
+        echo "  version: ${PKG_VERSION}"
+
+        EXPECTED_PKG_NAME='${{ inputs.expected_pkg_name }}'
+        if [[ -n "$EXPECTED_PKG_NAME" ]]; then
+          if [[ "$PKG_NAME" != "$EXPECTED_PKG_NAME" ]]; then
+            echo "::error::package.json name (${PKG_NAME}) does not match expected name ($EXPECTED_PKG_NAME)"
+            exit 1
+          fi
+        fi
+
+        EXPECTED_PKG_VERSION='${{ inputs.expected_pkg_version }}'
+        if [[ -n "$EXPECTED_PKG_VERSION" ]]; then
+          EXPECTED_PKG_VERSION="${EXPECTED_PKG_VERSION#v}"  # strip optional leading v
+
+          if [[ "$PKG_VERSION" != "$EXPECTED_PKG_VERSION" ]]; then
+            echo "::error::package.json version (${PKG_VERSION}) does not match expected version (${EXPECTED_PKG_VERSION})"
+            exit 1
+          fi
+        fi
