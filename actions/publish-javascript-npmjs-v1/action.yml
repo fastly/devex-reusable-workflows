@@ -38,7 +38,7 @@ runs:
   using: composite
   steps:
     - name: Validate package name and/or version
-      uses: fastly/devex-reusable-workflows/actions/validate-javascript-package-v1@kats/publish-javascript-packages
+      uses: fastly/devex-reusable-workflows/actions/validate-javascript-package-v1@main
       with:
         expected_pkg_name: ${{ inputs.expected_pkg_name }}
         expected_pkg_version: ${{ inputs.expected_pkg_version }}

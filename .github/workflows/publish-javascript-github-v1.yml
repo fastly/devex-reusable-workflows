@@ -66,7 +66,7 @@ jobs:
 
       - name: Publish to GitHub Packages
         id: publish_github
-        uses: fastly/devex-reusable-workflows/actions/publish-javascript-github-v1@kats/publish-javascript-packages
+        uses: fastly/devex-reusable-workflows/actions/publish-javascript-github-v1@main
         with:
           expected_pkg_name: ${{ inputs.expected_pkg_name }}
           expected_pkg_version: ${{ inputs.expected_pkg_version }}

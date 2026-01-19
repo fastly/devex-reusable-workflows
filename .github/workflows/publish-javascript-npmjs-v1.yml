@@ -61,7 +61,7 @@ jobs:
 
       - name: Publish to npmjs.org
         id: publish_npmjs
-        uses: fastly/devex-reusable-workflows/actions/publish-javascript-npmjs-v1@kats/publish-javascript-packages
+        uses: fastly/devex-reusable-workflows/actions/publish-javascript-npmjs-v1@main
         with:
           expected_pkg_name: ${{ inputs.expected_pkg_name }}
           expected_pkg_version: ${{ inputs.expected_pkg_version }}
