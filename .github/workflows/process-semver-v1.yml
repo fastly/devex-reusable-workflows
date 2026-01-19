@@ -2,7 +2,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: "Optional version override (SemVer WITHOUT leading v), e.g. 1.2.3 or 1.2.3-rc.1"
+        description: "Optional version override, with or without a leading v, e.g. 1.2.3 or v1.2.3-rc.1. If not provided, calculated from tag name."
         type: string
         required: false
         default: ""
@@ -19,7 +19,8 @@ jobs:
       version: ${{ steps.out.outputs.version }}
       dist_tag: ${{ steps.out.outputs.dist_tag }}
     steps:
-      - id: out
+      - name: Extract version and dist tag from version string
+        id: out
         shell: bash
         run: |
           # SemVer (no leading "v" in the regex; leading "v" is stripped before validation)

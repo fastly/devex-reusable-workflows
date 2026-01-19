@@ -1,0 +1,78 @@
+name: Publish JavaScript package to npmjs
+description: >
+  Optionally validates package.json name and/or version and publishes
+  to npmjs.org (supports dry-run). Assumes dependencies are already installed.
+
+inputs:
+  expected_pkg_name:
+    description: >
+      Expected package.json name. If provided, must match.
+    required: false
+
+  expected_pkg_version:
+    description: >
+      Expected package.json version. If provided, must match.
+      May include optional leading 'v' (e.g. v1.2.3).
+    required: false
+
+  dist_tag:
+    description: >
+      npm dist-tag to publish under (e.g. latest, rc, beta).
+      Defaults to 'latest'.
+    required: false
+    default: "latest"
+
+  dry_run:
+    description: >
+      If true, runs npm publish --dry-run instead of publishing.
+    required: false
+    default: "false"
+
+  cwd:
+    description: >
+      Working directory containing package.json (relative to repo root).
+    required: false
+    default: "."
+
+runs:
+  using: composite
+  steps:
+    - name: Validate package name and/or version
+      uses: fastly/devex-reusable-workflows/actions/validate-javascript-package-v1@main
+      with:
+        expected_pkg_name: ${{ inputs.expected_pkg_name }}
+        expected_pkg_version: ${{ inputs.expected_pkg_version }}
+        cwd: ${{ inputs.cwd }}
+
+    - name: Publish to npmjs.org
+      shell: bash
+      working-directory: ${{ inputs.cwd }}
+      run: |
+        set -euo pipefail
+
+        if [[ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" || -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then
+          echo "::error::OIDC not available."
+          echo "::notice::Hint: Caller must grant: permissions: id-token: write"
+          exit 1
+        fi
+
+        DIST_TAG="${{ inputs.dist_tag }}"
+        DRY_RUN="${{ inputs.dry_run }}"
+
+        PKG_NAME="$(npm pkg get name --json | jq -r)"
+        PKG_VERSION="$(npm pkg get version --json | jq -r)"
+
+        echo "Publishing ${PKG_NAME} v${PKG_VERSION} to npmjs.org"
+        echo "  cwd     : ${{ inputs.cwd }}"
+        echo "  dist-tag: ${DIST_TAG}"
+        echo "  dry-run : ${DRY_RUN}"
+        
+        PUBLISH_ARGS=(
+          --access=public
+          --tag "$DIST_TAG"
+          --registry=https://registry.npmjs.org/
+        )
+        if [[ "$DRY_RUN" == "true" ]]; then
+          PUBLISH_ARGS+=(--dry-run)
+        fi
+        npm publish "${PUBLISH_ARGS[@]}"
