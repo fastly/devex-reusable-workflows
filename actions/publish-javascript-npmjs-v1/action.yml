@@ -1,7 +1,7 @@
 name: Publish JavaScript package to npmjs
 description: >
-  Optionally validates package.json name and/or version and publishes
-  to npmjs.org (supports dry-run). Assumes dependencies are already installed.
+  Publishes a package to npmjs.org using Trusted Publishing. Assumes dependencies are already installed.
+  Optionally validates package.json name and/or version.
 
 inputs:
   expected_pkg_name:
