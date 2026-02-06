@@ -1,7 +1,6 @@
 name: Validate package.json name and/or version
 description: >
-  Optionally validates package.json name and/or version and publishes
-  to npmjs.org (supports dry-run). Assumes dependencies are already installed.
+  Validates package.json name and/or version.
 
 inputs:
   expected_pkg_name:
