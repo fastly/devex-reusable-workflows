@@ -6,6 +6,14 @@ on:
         type: string
         required: false
         default: ""
+      tag_prefix:
+        description: >
+          Required prefix for tag-triggered versions.
+          This prefix is strict and must fully match the tag format
+          (e.g. 'v' → v1.2.3, 'release/v' → release/v1.2.3).
+        type: string
+        required: false
+        default: "v"
     outputs:
       version:
         value: ${{ jobs.extract.outputs.version }}
@@ -23,15 +31,18 @@ jobs:
         id: out
         shell: bash
         run: |
-          # SemVer (no leading "v" in the regex; leading "v" is stripped before validation)
+          set -euo pipefail
+
+          # SemVer (no leading "v" in the regex; a leading "v" is stripped after prefix normalization, before validation)
           SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
 
           VERSION_INPUT='${{ inputs.version }}'
+          TAG_PREFIX='${{ inputs.tag_prefix }}'
 
           # Decide source: input override or tag
-          SOURCE="inputs.version"
           VERSION_STRING="$VERSION_INPUT"
           if [[ -z "$VERSION_STRING" ]]; then
+
             SOURCE="tag"
             if [[ "${GITHUB_REF:-}" != refs/tags/* ]]; then
               echo "::error::No inputs.version provided and this run is not a tag ref (GITHUB_REF='${GITHUB_REF:-}')"
@@ -39,20 +50,36 @@ jobs:
             fi
             VERSION_STRING="$GITHUB_REF_NAME"
 
-            # Tag must start with v (only when using tag source)
-            if [[ "$VERSION_STRING" != v* ]]; then
-              echo "::error::Tag must start with 'v' (got '$VERSION_STRING')"
+            # Tag must start with configured prefix
+            if [[ -z "$TAG_PREFIX" ]]; then
+              echo "::error::tag_prefix must not be the empty string"
               exit 1
             fi
+
+            if [[ "${VERSION_STRING:0:${#TAG_PREFIX}}" != "$TAG_PREFIX" ]]; then
+              echo "::error::Tag must start with prefix '$TAG_PREFIX' (got '$VERSION_STRING')"
+              exit 1
+            fi
+            VERSION="${VERSION_STRING:${#TAG_PREFIX}}"
+            if [[ -z "$VERSION" ]]; then
+              echo "::error::Tag '$GITHUB_REF_NAME' contains no version after prefix '$TAG_PREFIX'"
+              exit 1
+            fi
+
+          else
+          
+            SOURCE="inputs.version"
+            # Normalize optional leading v
+            VERSION="${VERSION_STRING#v}"
+
           fi
 
-          # Normalize leading v, then validate SemVer
-          VERSION="${VERSION_STRING#v}"
+          # Validate SemVer
           if [[ ! "$VERSION" =~ $SEMVER_RE ]]; then
             if [[ "$SOURCE" == "inputs.version" ]]; then
               echo "::error::Invalid inputs.version: '$VERSION_STRING' (expected SemVer like 1.2.3 or 1.2.3-rc.1 with an optional leading v)"
             else
-              echo "::error::Invalid tag version: '$VERSION_STRING' (expected v followed by SemVer like v1.2.3 or v1.2.3-rc.1)"
+              echo "::error::Invalid tag version: '$GITHUB_REF_NAME' (expected '$TAG_PREFIX' followed by SemVer like ${TAG_PREFIX}1.2.3 or ${TAG_PREFIX}1.2.3-rc.1)"
             fi
             exit 1
           fi
