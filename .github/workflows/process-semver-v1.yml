@@ -1,3 +1,5 @@
+name: Process SemVer string
+
 on:
   workflow_call:
     inputs:
