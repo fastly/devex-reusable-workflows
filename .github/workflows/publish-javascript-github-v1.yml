@@ -33,6 +33,12 @@ on:
         required: false
         default: false
 
+      workspaces:
+        description: 'Set --workspaces during publish. Used for monorepos.'
+        type: boolean
+        required: false
+        default: false
+
       cwd:
         description: >
           Working directory containing package.json (relative to repo root).
@@ -75,6 +81,7 @@ jobs:
           dist_tag: ${{ inputs.dist_tag }}
           node_auth_token: ${{ inputs.node_auth_token != '' && inputs.node_auth_token || secrets.GITHUB_TOKEN }}
           dry_run: ${{ inputs.dry_run }}
+          workspaces: ${{ inputs.workspaces }}
           cwd: ${{ inputs.cwd }}
       - name: Publish status
         if: always()
