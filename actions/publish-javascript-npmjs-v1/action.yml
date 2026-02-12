@@ -28,6 +28,12 @@ inputs:
     required: false
     default: "false"
 
+  workspaces:
+    description: >
+      If true, runs npm publish --workspaces.
+    required: false
+    default: "false"
+
   cwd:
     description: >
       Working directory containing package.json (relative to repo root).
@@ -58,14 +64,16 @@ runs:
 
         DIST_TAG="${{ inputs.dist_tag }}"
         DRY_RUN="${{ inputs.dry_run }}"
+        WORKSPACES="${{ inputs.workspaces }}"
 
         PKG_NAME="$(npm pkg get name --json | jq -r)"
         PKG_VERSION="$(npm pkg get version --json | jq -r)"
 
         echo "Publishing ${PKG_NAME} v${PKG_VERSION} to npmjs.org"
-        echo "  cwd     : ${{ inputs.cwd }}"
-        echo "  dist-tag: ${DIST_TAG}"
-        echo "  dry-run : ${DRY_RUN}"
+        echo "  cwd        : ${{ inputs.cwd }}"
+        echo "  dist-tag   : ${DIST_TAG}"
+        echo "  dry-run    : ${DRY_RUN}"
+        echo "  workspaces : ${WORKSPACES}"
         
         PUBLISH_ARGS=(
           --access=public
@@ -74,5 +82,8 @@ runs:
         )
         if [[ "$DRY_RUN" == "true" ]]; then
           PUBLISH_ARGS+=(--dry-run)
+        fi
+        if [[ "$WORKSPACES" == "true" ]]; then
+          PUBLISH_ARGS+=(--workspaces)
         fi
         npm publish "${PUBLISH_ARGS[@]}"

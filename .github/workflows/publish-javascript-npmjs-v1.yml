@@ -21,6 +21,12 @@ on:
         type: string
         required: false
 
+      workspaces:
+        description: 'Set --workspaces during publish. Used for monorepos.'
+        type: boolean
+        required: false
+        default: false
+
       dry_run:
         description: 'Run all checks but do not actually publish packages.'
         type: boolean
@@ -69,6 +75,7 @@ jobs:
           expected_pkg_version: ${{ inputs.expected_pkg_version }}
           dist_tag: ${{ inputs.dist_tag }}
           dry_run: ${{ inputs.dry_run }}
+          workspaces: ${{ inputs.workspaces }}
           cwd: ${{ inputs.cwd }}
 
       - name: Publish status
