@@ -34,6 +34,15 @@ inputs:
     required: false
     default: "false"
 
+  expected_workspaces_versions:
+    description: >
+      JSON object mapping workspace package name -> version.
+      Required when workspaces="true".
+      Example: {"@scope/a":"1.2.3","@scope/b":"4.5.6"}
+      Values may include optional leading 'v' (e.g. "v1.2.3").
+    required: false
+    default: "{}"
+
   cwd:
     description: >
       Working directory containing package.json (relative to repo root).
@@ -43,11 +52,13 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Validate package name and/or version
-      uses: fastly/devex-reusable-workflows/actions/validate-javascript-package-v1@main
+    - name: Validate package name and/or version(s)
+      uses: fastly/devex-reusable-workflows/actions/validate-javascript-package-v1@kats/workspaces-versions
       with:
         expected_pkg_name: ${{ inputs.expected_pkg_name }}
         expected_pkg_version: ${{ inputs.expected_pkg_version }}
+        workspaces: ${{ inputs.workspaces }}
+        expected_workspaces_versions: ${{ inputs.expected_workspaces_versions }}
         cwd: ${{ inputs.cwd }}
 
     - name: Publish to npmjs.org

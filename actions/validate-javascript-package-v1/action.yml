@@ -1,6 +1,6 @@
-name: Validate package.json name and/or version
+name: Validate package.json name and/or version(s)
 description: >
-  Validates package.json name and/or version.
+  Validates package.json name and/or version. Optionally validates all npm workspaces.
 
 inputs:
   expected_pkg_name:
@@ -14,6 +14,21 @@ inputs:
       May include optional leading 'v' (e.g. v1.2.3).
     required: false
 
+  workspaces:
+    description: >
+      If "true", validate all npm workspaces using expected_workspaces_versions.
+    required: false
+    default: "false"
+
+  expected_workspaces_versions:
+    description: >
+      JSON object mapping workspace package name -> version.
+      Required when workspaces="true".
+      Example: {"@scope/a":"1.2.3","@scope/b":"4.5.6"}
+      Values may include optional leading 'v' (e.g. "v1.2.3").
+    required: false
+    default: "{}"
+
   cwd:
     description: >
       Working directory containing package.json (relative to repo root).
@@ -23,38 +38,14 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Validate package.json name and/or version
+    - name: Validate package.json name and/or version(s)
       shell: bash
-      working-directory: ${{ inputs.cwd }}
       run: |
         set -euo pipefail
-
-        if [[ ! -f package.json ]]; then
-          echo "::error::No package.json found in cwd '${{ inputs.cwd }}'"
-          exit 1
-        fi
-
-        PKG_NAME="$(npm pkg get name --json | jq -r)"
-        PKG_VERSION="$(npm pkg get version --json | jq -r)"
-
-        echo "Detected package:"
-        echo "  name   : ${PKG_NAME}"
-        echo "  version: ${PKG_VERSION}"
-
-        EXPECTED_PKG_NAME='${{ inputs.expected_pkg_name }}'
-        if [[ -n "$EXPECTED_PKG_NAME" ]]; then
-          if [[ "$PKG_NAME" != "$EXPECTED_PKG_NAME" ]]; then
-            echo "::error::package.json name (${PKG_NAME}) does not match expected name ($EXPECTED_PKG_NAME)"
-            exit 1
-          fi
-        fi
-
-        EXPECTED_PKG_VERSION='${{ inputs.expected_pkg_version }}'
-        if [[ -n "$EXPECTED_PKG_VERSION" ]]; then
-          EXPECTED_PKG_VERSION="${EXPECTED_PKG_VERSION#v}"  # strip optional leading v
-
-          if [[ "$PKG_VERSION" != "$EXPECTED_PKG_VERSION" ]]; then
-            echo "::error::package.json version (${PKG_VERSION}) does not match expected version (${EXPECTED_PKG_VERSION})"
-            exit 1
-          fi
-        fi
+        node "${GITHUB_ACTION_PATH}/scripts/validate.ts"
+      env:
+        INPUT_EXPECTED_PKG_NAME: ${{ inputs.expected_pkg_name }}
+        INPUT_EXPECTED_PKG_VERSION: ${{ inputs.expected_pkg_version }}
+        INPUT_WORKSPACES: ${{ inputs.workspaces }}
+        INPUT_EXPECTED_WORKSPACES_VERSIONS: ${{ inputs.expected_workspaces_versions }}
+        INPUT_CWD: ${{ inputs.cwd }}

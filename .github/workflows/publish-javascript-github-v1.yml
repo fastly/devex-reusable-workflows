@@ -39,6 +39,16 @@ on:
         required: false
         default: false
 
+      expected_workspaces_versions:
+        description: >
+          JSON object mapping workspace package name -> version.
+          Required when workspaces="true".
+          Example: {"@scope/a":"1.2.3","@scope/b":"4.5.6"}
+          Values may include optional leading 'v' (e.g. "v1.2.3").
+        type: string
+        required: false
+        default: "{}"
+
       cwd:
         description: >
           Working directory containing package.json (relative to repo root).
@@ -74,7 +84,7 @@ jobs:
 
       - name: Publish to GitHub Packages
         id: publish_github
-        uses: fastly/devex-reusable-workflows/actions/publish-javascript-github-v1@main
+        uses: fastly/devex-reusable-workflows/actions/publish-javascript-github-v1@kats/workspaces-versions
         with:
           expected_pkg_name: ${{ inputs.expected_pkg_name }}
           expected_pkg_version: ${{ inputs.expected_pkg_version }}
@@ -82,6 +92,7 @@ jobs:
           node_auth_token: ${{ inputs.node_auth_token != '' && inputs.node_auth_token || secrets.GITHUB_TOKEN }}
           dry_run: ${{ inputs.dry_run }}
           workspaces: ${{ inputs.workspaces }}
+          expected_workspaces_versions: ${{ inputs.expected_workspaces_versions }}
           cwd: ${{ inputs.cwd }}
       - name: Publish status
         if: always()
