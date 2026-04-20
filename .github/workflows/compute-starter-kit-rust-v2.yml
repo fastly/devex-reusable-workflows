@@ -40,6 +40,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Uninstall existing Rust toolchain (workaround for some runner images)
+        run: rustup toolchain uninstall stable
+
       - name: Setup Rust toolchain with caching
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
