@@ -38,7 +38,7 @@ If the string is successfully processed as a SemVer, the workflow succeeds and p
 
 * `version` - the SemVer string, such as `1.2.3` or `1.2.3-beta.0`
 
-* `dist_tag` - the "tag" part of the semver (such as `beta`, `rc`, or `latest` if not provided) 
+* `dist_tag` - the "tag" part of the semver (such as `beta`, `rc`, or `latest` if not provided)
 
 If the string is not process as a SemVer, the workflow fails.
 
@@ -137,6 +137,69 @@ Authentication for publishing the package to npmjs.org is performed using
     id-token: write
     contents: read
   ```
+
+### `publish-rust-crates-io-v1.yml`
+
+Publishes a Rust crate to crates.io using trusted publishing. Optionally checks the crate's
+version before publishing.
+
+#### Inputs
+
+* `crate_name` - (optional) Name of the crate to publish. If not provided, will publish
+  the root package.
+
+* `expected_version` - (optional) Expected crate version. If provided, must match the `version`
+  field in the crate's `Cargo.toml` file, or the workflow fails. Requires `crate_name` to also
+  be specified; the workflow will fail if `expected_version` is set without `crate_name`.
+
+#### Outputs
+
+If all the following steps are successful, the workflow succeeds:
+- Rust toolchain is installed
+- if `expected_version` check is provided, it passes
+- the `cargo publish --locked` command successfully publishes the crate to crates.io
+
+Otherwise, the workflow fails.
+
+#### Notes
+
+Authentication for publishing the crate to crates.io is performed using
+[trusted publishing](https://doc.rust-lang.org/cargo/reference/publishing.html#trusted-publishing).
+
+- The crate must be set up for trusted publishing.
+  See the [crates.io trusted publishing documentation](https://crates.io/docs/trusted-publishing)
+  for detailed instructions on configuring the calling workflow as a trusted publisher.
+
+- The calling workflow must have permissions to generate OIDC tokens.
+  A workflow can be given permissions by adding the permission:
+  ```yaml
+  permissions:
+    id-token: write
+    contents: read
+  ```
+
+#### Example Usage
+
+Example for publishing a crate when a version tag is pushed:
+
+```yaml
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  publish:
+    permissions:
+      id-token: write
+      contents: read
+    uses: fastly/devex-reusable-workflows/.github/workflows/publish-rust-crates-io-v1.yml@main
+    with:
+      crate_name: my-crate-name
+      expected_version: ${{ github.ref_name }}
+```
 
 ## Actions
 
