@@ -151,6 +151,7 @@ version before publishing.
 * `expected_version` - (optional) Expected crate version. If provided, must match the `version`
   field in the crate's `Cargo.toml` file, or the workflow fails. Requires `crate_name` to also
   be specified; the workflow will fail if `expected_version` is set without `crate_name`.
+  A leading `v` prefix (e.g., `v1.0.0`) is automatically stripped before comparison.
 
 #### Outputs
 
