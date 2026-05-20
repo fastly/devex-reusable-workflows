@@ -38,6 +38,8 @@ jobs:
         if: inputs.expected_version != '' && inputs.crate_name != ''
         run: |
           EXPECTED_VERSION="${{ inputs.expected_version }}"
+          # Strip leading 'v' if present (e.g., v1.0.0 -> 1.0.0)
+          EXPECTED_VERSION="${EXPECTED_VERSION#v}"
           CRATE_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "${{ inputs.crate_name }}") | .version')
           if [ "$EXPECTED_VERSION" != "$CRATE_VERSION" ]; then
             echo "::error::Expected version ($EXPECTED_VERSION) does not match crate version ($CRATE_VERSION)"
