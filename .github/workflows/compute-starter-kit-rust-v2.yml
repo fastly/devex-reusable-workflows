@@ -67,12 +67,12 @@ jobs:
         run: RUSTFLAGS="--deny warnings" cargo build --profile release
 
       - name: Install Fastly CLI
-        uses: fastly/compute-actions/setup@v13
+        uses: fastly/compute-actions/setup@v14
         with:
           token: ${{ secrets.github_token }}
 
       - name: Build (using CLI)
-        uses: fastly/compute-actions/build@v13
+        uses: fastly/compute-actions/build@v14
 
       - name: Upload WASM package as an artifact
         uses: actions/upload-artifact@v7
