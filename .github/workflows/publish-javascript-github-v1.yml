@@ -61,10 +61,12 @@ jobs:
 
     steps:
       - name: Checkout repository contents
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 'lts/*'
 
@@ -74,7 +76,7 @@ jobs:
 
       - name: Publish to GitHub Packages
         id: publish_github
-        uses: fastly/devex-reusable-workflows/actions/publish-javascript-github-v1@main
+        uses: $/actions/publish-javascript-github-v1
         with:
           expected_pkg_name: ${{ inputs.expected_pkg_name }}
           expected_pkg_version: ${{ inputs.expected_pkg_version }}
@@ -93,7 +95,7 @@ jobs:
             echo "::notice::Dry run enabled — no package was actually published."
             exit 0
           fi
-      
+
           echo "github outcome: ${{ steps.publish_github.outcome || 'skipped' }}"
           if [[ "${{ steps.publish_github.outcome }}" == 'failure' ]]; then
             echo "::error::Publish to GitHub Packages failed."
