@@ -55,10 +55,12 @@ jobs:
 
     steps:
       - name: Checkout repository contents
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 'lts/*'
           registry-url: 'https://registry.npmjs.org'
@@ -69,7 +71,7 @@ jobs:
 
       - name: Publish to npmjs.org
         id: publish_npmjs
-        uses: fastly/devex-reusable-workflows/actions/publish-javascript-npmjs-v1@main
+        uses: $/actions/publish-javascript-npmjs-v1
         with:
           expected_pkg_name: ${{ inputs.expected_pkg_name }}
           expected_pkg_version: ${{ inputs.expected_pkg_version }}

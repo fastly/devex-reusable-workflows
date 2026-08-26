@@ -30,7 +30,7 @@ runs:
         set -euo pipefail
 
         if [[ ! -f package.json ]]; then
-          echo "::error::No package.json found in cwd '${{ inputs.cwd }}'"
+          echo "::error::No package.json found in cwd '${INPUTS_CWD}'"
           exit 1
         fi
 
@@ -41,7 +41,7 @@ runs:
         echo "  name   : ${PKG_NAME}"
         echo "  version: ${PKG_VERSION}"
 
-        EXPECTED_PKG_NAME='${{ inputs.expected_pkg_name }}'
+        EXPECTED_PKG_NAME='${INPUTS_EXPECTED_PKG_NAME}'
         if [[ -n "$EXPECTED_PKG_NAME" ]]; then
           if [[ "$PKG_NAME" != "$EXPECTED_PKG_NAME" ]]; then
             echo "::error::package.json name (${PKG_NAME}) does not match expected name ($EXPECTED_PKG_NAME)"
@@ -49,7 +49,7 @@ runs:
           fi
         fi
 
-        EXPECTED_PKG_VERSION='${{ inputs.expected_pkg_version }}'
+        EXPECTED_PKG_VERSION='${INPUTS_EXPECTED_PKG_VERSION}'
         if [[ -n "$EXPECTED_PKG_VERSION" ]]; then
           EXPECTED_PKG_VERSION="${EXPECTED_PKG_VERSION#v}"  # strip optional leading v
 
@@ -58,3 +58,7 @@ runs:
             exit 1
           fi
         fi
+      env:
+        INPUTS_CWD: ${{ inputs.cwd }}
+        INPUTS_EXPECTED_PKG_NAME: ${{ inputs.expected_pkg_name }}
+        INPUTS_EXPECTED_PKG_VERSION: ${{ inputs.expected_pkg_version }}

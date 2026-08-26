@@ -38,8 +38,8 @@ jobs:
           # SemVer (no leading "v" in the regex; a leading "v" is stripped after prefix normalization, before validation)
           SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
 
-          VERSION_INPUT='${{ inputs.version }}'
-          TAG_PREFIX='${{ inputs.tag_prefix }}'
+          VERSION_INPUT='${INPUTS_VERSION}'
+          TAG_PREFIX='${INPUTS_TAG_PREFIX}'
 
           # Decide source: input override or tag
           VERSION_STRING="$VERSION_INPUT"
@@ -69,7 +69,7 @@ jobs:
             fi
 
           else
-          
+
             SOURCE="inputs.version"
             # Normalize optional leading v
             VERSION="${VERSION_STRING#v}"
@@ -98,3 +98,6 @@ jobs:
 
           echo "version=$VERSION"   >> "$GITHUB_OUTPUT"
           echo "dist_tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
+        env:
+          INPUTS_VERSION: ${{ inputs.version }}
+          INPUTS_TAG_PREFIX: ${{ inputs.tag_prefix }}

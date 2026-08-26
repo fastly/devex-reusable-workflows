@@ -49,7 +49,7 @@ runs:
   using: composite
   steps:
     - name: Validate package name and/or version
-      uses: fastly/devex-reusable-workflows/actions/validate-javascript-package-v1@main
+      uses: $/actions/validate-javascript-package-v1
       with:
         expected_pkg_name: ${{ inputs.expected_pkg_name }}
         expected_pkg_version: ${{ inputs.expected_pkg_version }}
@@ -59,6 +59,10 @@ runs:
       shell: bash
       env:
         NODE_AUTH_TOKEN: ${{ inputs.node_auth_token }}
+        INPUTS_DIST_TAG: ${{ inputs.dist_tag }}
+        INPUTS_DRY_RUN: ${{ inputs.dry_run }}
+        INPUTS_WORKSPACES: ${{ inputs.workspaces }}
+        INPUTS_CWD: ${{ inputs.cwd }}
       working-directory: ${{ inputs.cwd }}
       run: |
         set -euo pipefail
@@ -68,21 +72,21 @@ runs:
           exit 1
         fi
 
-        DIST_TAG="${{ inputs.dist_tag }}"
-        DRY_RUN="${{ inputs.dry_run }}"
-        WORKSPACES="${{ inputs.workspaces }}"
+        DIST_TAG="${INPUTS_DIST_TAG}"
+        DRY_RUN="${INPUTS_DRY_RUN}"
+        WORKSPACES="${INPUTS_WORKSPACES}"
 
         PKG_NAME="$(npm pkg get name --json | jq -r)"
         PKG_VERSION="$(npm pkg get version --json | jq -r)"
 
         echo "Publishing ${PKG_NAME} v${PKG_VERSION} to GitHub Packages"
-        echo "  cwd        : ${{ inputs.cwd }}"
+        echo "  cwd        : ${INPUTS_CWD}"
         echo "  dist-tag   : ${DIST_TAG}"
         echo "  dry-run    : ${DRY_RUN}"
         echo "  workspaces : ${WORKSPACES}"
 
         npm config set "//npm.pkg.github.com/:_authToken" "$NODE_AUTH_TOKEN"
-        
+
         PUBLISH_ARGS=(
           --tag "$DIST_TAG"
           --registry=https://npm.pkg.github.com/
