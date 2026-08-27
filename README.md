@@ -8,13 +8,11 @@ when changes are made.
 
 ## Workflows
 
-### `compute-starter-kit-rust-v1.yml`
+### `compute-project-rust-v1.yml`
 
-TODO: Add description
-
-### `compute-starter-kit-rust-v2.yml`
-
-TODO: Add description
+A general-purpose workflow for Rust-based Compute projects which runs
+various linting and static analysis tools before building the WASM
+package.
 
 ### `dependabot-changelog-update.yml`
 

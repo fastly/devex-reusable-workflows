@@ -28,10 +28,4 @@ jobs:
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
         with:
-          # GitHub Code Scanning (which backs the SARIF upload this action does
-          # internally) isn't available for private repos without GitHub Advanced
-          # Security. Skip just the upload while private so this check doesn't
-          # show as a false failure -- zizmor itself still runs and lints either
-          # way. This flips back on automatically once the repo goes public.
-          advanced-security: ${{ !github.event.repository.private }}
-          annotations:  ${{ github.event.repository.private }}
+          advanced-security: true

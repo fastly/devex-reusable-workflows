@@ -70,7 +70,7 @@ jobs:
       - name: Install Fastly CLI
         uses: fastly/compute-actions/setup@a25cf83ef5c19ef7d86f1eebffcd8f6c02ddc786 # v14
         with:
-          token: ${{ secrets.github_token }}
+          token: ${{ secrets.gh_token }}
 
       - name: Build (using CLI)
         uses: fastly/compute-actions/build@a25cf83ef5c19ef7d86f1eebffcd8f6c02ddc786 # v14
