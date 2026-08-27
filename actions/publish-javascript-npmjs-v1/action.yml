@@ -44,7 +44,7 @@ runs:
   using: composite
   steps:
     - name: Validate package name and/or version
-      uses: fastly/devex-reusable-workflows/actions/validate-javascript-package-v1@main
+      uses: $/actions/validate-javascript-package-v1
       with:
         expected_pkg_name: ${{ inputs.expected_pkg_name }}
         expected_pkg_version: ${{ inputs.expected_pkg_version }}
@@ -62,19 +62,19 @@ runs:
           exit 1
         fi
 
-        DIST_TAG="${{ inputs.dist_tag }}"
-        DRY_RUN="${{ inputs.dry_run }}"
-        WORKSPACES="${{ inputs.workspaces }}"
+        DIST_TAG="${INPUTS_DIST_TAG}"
+        DRY_RUN="${INPUTS_DRY_RUN}"
+        WORKSPACES="${INPUTS_WORKSPACES}"
 
         PKG_NAME="$(npm pkg get name --json | jq -r)"
         PKG_VERSION="$(npm pkg get version --json | jq -r)"
 
         echo "Publishing ${PKG_NAME} v${PKG_VERSION} to npmjs.org"
-        echo "  cwd        : ${{ inputs.cwd }}"
+        echo "  cwd        : ${INPUTS_CWD}"
         echo "  dist-tag   : ${DIST_TAG}"
         echo "  dry-run    : ${DRY_RUN}"
         echo "  workspaces : ${WORKSPACES}"
-        
+
         PUBLISH_ARGS=(
           --access=public
           --tag "$DIST_TAG"
@@ -87,3 +87,8 @@ runs:
           PUBLISH_ARGS+=(--workspaces)
         fi
         npm publish "${PUBLISH_ARGS[@]}"
+      env:
+        INPUTS_DIST_TAG: ${{ inputs.dist_tag }}
+        INPUTS_DRY_RUN: ${{ inputs.dry_run }}
+        INPUTS_WORKSPACES: ${{ inputs.workspaces }}
+        INPUTS_CWD: ${{ inputs.cwd }}
