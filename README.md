@@ -156,9 +156,9 @@ version before publishing.
   Generated files are usually gitignored, so this is often paired with `allow_dirty`.
 
 * `allow_dirty` - (optional, defaults to `false`) Passes `--allow-dirty` to `cargo publish`, so
-  that files which are not committed to git can still be included in the package. That flag
-  flag suppresses the standard uncommitted-changes check entirely, so this workflow ensures that
-  no *tracked* file has been modified, failing if one has.
+  that files which are not committed to git can still be included in the package. When provided,
+  cargo skips the check entirely for both gitignored and tracked files. The workflow checks that
+  tracked files are not dirty to preserve some of that safety check.
 
 #### Outputs
 
