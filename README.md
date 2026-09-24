@@ -151,11 +151,22 @@ version before publishing.
   be specified; the workflow will fail if `expected_version` is set without `crate_name`.
   A leading `v` prefix (e.g., `v1.0.0`) is automatically stripped before comparison.
 
+* `pre_publish_command` - (optional) Command to run in the repository root before the crate is
+  packaged. Use when some files are generated separately and not committed.
+  Generated files are usually gitignored, so this is often paired with `allow_dirty`.
+
+* `allow_dirty` - (optional, defaults to `false`) Passes `--allow-dirty` to `cargo publish`, so
+  that files which are not committed to git can still be included in the package. That flag
+  flag suppresses the standard uncommitted-changes check entirely, so this workflow ensures that
+  no *tracked* file has been modified, failing if one has.
+
 #### Outputs
 
 If all the following steps are successful, the workflow succeeds:
 - Rust toolchain is installed
 - if `expected_version` check is provided, it passes
+- if `pre_publish_command` is provided, it exits successfully
+- if `allow_dirty` is set, no tracked file has been modified
 - the `cargo publish --locked` command successfully publishes the crate to crates.io
 
 Otherwise, the workflow fails.
